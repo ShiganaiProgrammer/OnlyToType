@@ -186,6 +186,25 @@ public class AutoScrollPlayer : MonoBehaviour
         commandInput.Clear();
     }
 
+    public void DisableInput()
+    {
+        if (inputReader != null)
+        {
+            inputReader.OnCharTyped -= commandInput.ProcessChar;
+            inputReader.Disable();
+        }
+    }
+
+    public void EnableInput()
+    {
+        if (inputReader != null)
+        {
+            inputReader.OnCharTyped -= commandInput.ProcessChar;
+            inputReader.OnCharTyped += commandInput.ProcessChar;
+            inputReader.Enable();
+        }
+    }
+
     void OnDrawGizmosSelected()
     {
         Gizmos.color = Color.green;

@@ -7,21 +7,36 @@ public class TypingGameBootstrap : MonoBehaviour
     {
         Application.targetFrameRate = 60;
 
+        var menuObj = new GameObject("GameMenu");
+        var menu = menuObj.AddComponent<GameMenu>();
+        menu.Show(StartStage);
+    }
+
+    void StartStage(GameMenu.Stage stage)
+    {
         SetupCamera();
+
+        if (stage == GameMenu.Stage.Random)
+        {
+            var existingGrid = GameObject.Find("Grid");
+            if (existingGrid != null)
+                Destroy(existingGrid);
+        }
+
         SetupBackground();
 
         var player = SetupPlayer();
         var ui = SetupUI();
 
         LevelGenerator levelGen = null;
-        var existingGrid = GameObject.Find("Grid");
-        if (existingGrid == null)
+        if (stage == GameMenu.Stage.Random)
             levelGen = SetupLevelGenerator(player.transform);
 
         var camFollow = Camera.main.gameObject.AddComponent<AutoScrollCamera>();
         camFollow.SetTarget(player.transform);
 
         SetupManager(player, ui, levelGen, camFollow);
+        player.EnableInput();
     }
 
     AutoScrollPlayer SetupPlayer()
@@ -56,7 +71,9 @@ public class TypingGameBootstrap : MonoBehaviour
         circle.radius = 0.45f;
         circle.offset = new Vector2(0f, -0.15f);
 
-        return playerObj.GetComponent<AutoScrollPlayer>() ?? playerObj.AddComponent<AutoScrollPlayer>();
+        var autoPlayer = playerObj.GetComponent<AutoScrollPlayer>() ?? playerObj.AddComponent<AutoScrollPlayer>();
+        autoPlayer.DisableInput();
+        return autoPlayer;
     }
 
     PlatformerUI SetupUI()
@@ -90,7 +107,7 @@ public class TypingGameBootstrap : MonoBehaviour
 
         cam.orthographic = true;
         cam.orthographicSize = 5f;
-        cam.backgroundColor = new Color(0.45f, 0.75f, 0.95f);
+        cam.backgroundColor = new Color(0.05f, 0.05f, 0.1f);
         cam.transform.position = new Vector3(0f, 0f, -10f);
     }
 
