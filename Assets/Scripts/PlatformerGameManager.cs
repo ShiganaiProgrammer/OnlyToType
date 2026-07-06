@@ -1,5 +1,7 @@
 using System.Collections;
 using UnityEngine;
+using UnityEngine.Networking;
+using UnityEngine.SceneManagement;
 using UnityEngine.Tilemaps;
 
 public class PlatformerGameManager : MonoBehaviour
@@ -18,6 +20,8 @@ public class PlatformerGameManager : MonoBehaviour
     bool isRespawning;
     bool isCleared;
     int lives;
+
+    Texture2D flagTexture;
 
     public void Initialize(
         AutoScrollPlayer scrollPlayer,
@@ -41,11 +45,28 @@ public class PlatformerGameManager : MonoBehaviour
 
         inputReader = new TypingInputReader();
         inputReader.OnEnterPressed += HandleEnterPressed;
+        inputReader.OnSpacePressed += HandleSpacePressed;
         inputReader.Enable();
     }
 
     void Start()
     {
+        StartCoroutine(LoadFlagTextureAndCreateGoal());
+    }
+
+    IEnumerator LoadFlagTextureAndCreateGoal()
+    {
+        var path = System.IO.Path.Combine(Application.streamingAssetsPath, "flag.png");
+        using var uwr = UnityWebRequestTexture.GetTexture(new System.Uri(path).AbsoluteUri);
+        yield return uwr.SendWebRequest();
+
+        if (uwr.result == UnityWebRequest.Result.Success)
+        {
+            flagTexture = DownloadHandlerTexture.GetContent(uwr);
+            flagTexture.filterMode = FilterMode.Bilinear;
+            flagTexture.wrapMode = TextureWrapMode.Clamp;
+        }
+
         if (GameObject.Find("Goal") == null)
             CreateGoal();
     }
@@ -57,6 +78,7 @@ public class PlatformerGameManager : MonoBehaviour
 
         if (inputReader == null) return;
         inputReader.OnEnterPressed -= HandleEnterPressed;
+        inputReader.OnSpacePressed -= HandleSpacePressed;
         inputReader.Dispose();
     }
 
@@ -68,15 +90,21 @@ public class PlatformerGameManager : MonoBehaviour
 
     void HandleEnterPressed()
     {
-        if (isGameOver || isCleared)
+        if (isGameOver)
             Restart();
+    }
+
+    void HandleSpacePressed()
+    {
+        if (isGameOver || isCleared)
+            GoToMenu();
     }
 
     void Update()
     {
         inputReader?.Poll();
 
-        if (isGameOver || isRespawning || player == null) return;
+        if (isGameOver || isRespawning || isCleared || player == null) return;
 
         if (player.IsFallen(DeathY))
             HandleDamage();
@@ -120,16 +148,6 @@ public class PlatformerGameManager : MonoBehaviour
         if (oldGoal != null)
             DestroyImmediate(oldGoal);
 
-        var oldGrid = GameObject.Find("Grid");
-        if (oldGrid != null)
-            DestroyImmediate(oldGrid);
-
-        if (levelGenerator != null)
-            DestroyImmediate(levelGenerator.gameObject);
-
-        var obj = new GameObject("LevelGenerator");
-        levelGenerator = obj.AddComponent<LevelGenerator>();
-        levelGenerator.Initialize(player.transform);
         CreateGoal();
     }
 
@@ -210,18 +228,8 @@ public class PlatformerGameManager : MonoBehaviour
 
     Texture2D LoadFlagTexture()
     {
-        var path = System.IO.Path.Combine(Application.dataPath, "EifcM5ONk7BFsyO1761288807_1761288851.png");
-        if (System.IO.File.Exists(path))
-        {
-            var bytes = System.IO.File.ReadAllBytes(path);
-            var tex = new Texture2D(2, 2);
-            if (tex.LoadImage(bytes))
-            {
-                tex.filterMode = FilterMode.Bilinear;
-                tex.wrapMode = TextureWrapMode.Clamp;
-                return tex;
-            }
-        }
+        if (flagTexture != null)
+            return flagTexture;
 
         var fallback = new Texture2D(16, 16);
         for (int y = 0; y < 16; y++)
@@ -265,5 +273,12 @@ public class PlatformerGameManager : MonoBehaviour
         player.EnableInput();
         inputReader.Enable();
         ResetWorld();
+    }
+
+    void GoToMenu()
+    {
+        inputReader.Dispose();
+        Destroy(gameObject);
+        SceneManager.LoadScene(SceneManager.GetActiveScene().name);
     }
 }

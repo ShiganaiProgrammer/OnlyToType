@@ -65,7 +65,7 @@ public class PlatformerUI : MonoBehaviour
         string fillPath = dataPath + "/HeartSystem/Sprites/Fill.png";
         if (File.Exists(fillPath))
         {
-            var tex = new Texture2D(2, 2);
+            var tex = new Texture2D(2, 2, TextureFormat.RGBA32, false);
             tex.LoadImage(File.ReadAllBytes(fillPath));
             heartFillSprite = Sprite.Create(tex, new Rect(0, 0, tex.width, tex.height), new Vector2(0.5f, 0.5f));
         }
@@ -73,7 +73,7 @@ public class PlatformerUI : MonoBehaviour
         string outlinePath = dataPath + "/HeartSystem/Sprites/Outline.png";
         if (File.Exists(outlinePath))
         {
-            var tex = new Texture2D(2, 2);
+            var tex = new Texture2D(2, 2, TextureFormat.RGBA32, false);
             tex.LoadImage(File.ReadAllBytes(outlinePath));
             heartOutlineSprite = Sprite.Create(tex, new Rect(0, 0, tex.width, tex.height), new Vector2(0.5f, 0.5f));
         }

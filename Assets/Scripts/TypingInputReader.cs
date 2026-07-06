@@ -5,6 +5,7 @@ public class TypingInputReader : IDisposable
 {
     public event Action<char> OnCharTyped;
     public event Action OnEnterPressed;
+    public event Action OnSpacePressed;
 
     public void Enable()
     {
@@ -25,6 +26,9 @@ public class TypingInputReader : IDisposable
 
         if (keyboard.enterKey.wasPressedThisFrame || keyboard.numpadEnterKey.wasPressedThisFrame)
             OnEnterPressed?.Invoke();
+
+        if (keyboard.spaceKey.wasPressedThisFrame)
+            OnSpacePressed?.Invoke();
     }
 
     void OnDeviceChange(InputDevice device, InputDeviceChange change)
