@@ -4,7 +4,7 @@ using UnityEngine.UI;
 
 public class GameMenu : MonoBehaviour
 {
-    public enum Stage { Demo, Random }
+    public enum Stage { Tutorial, Random }
     System.Action<Stage> onStart;
 
     public void Show(System.Action<Stage> onStartCallback)
@@ -37,29 +37,19 @@ public class GameMenu : MonoBehaviour
         title.fontStyle = FontStyle.Bold;
         AddOutline(title);
 
-        int i = 0;
-        var hasDemo = GameObject.Find("Grid") != null;
+        var opt1 = CreateLabel("Opt1", new Vector2(0f, 20f), new Vector2(600f, 50f), 32, TextAnchor.MiddleCenter, font);
+        opt1.transform.SetParent(transform, false);
+        opt1.text = "1: Tutorial";
+        opt1.color = new Color(0.7f, 0.9f, 1f);
+        AddOutline(opt1);
 
-        if (hasDemo)
-        {
-            var opt = CreateLabel("OptDemo", new Vector2(0f, 20f - i * 70f), new Vector2(600f, 50f), 32, TextAnchor.MiddleCenter, font);
-            opt.transform.SetParent(transform, false);
-            opt.text = "1: Demo Stage";
-            opt.color = new Color(0.7f, 0.9f, 1f);
-            AddOutline(opt);
-            i++;
-        }
+        var opt2 = CreateLabel("Opt2", new Vector2(0f, -50f), new Vector2(600f, 50f), 32, TextAnchor.MiddleCenter, font);
+        opt2.transform.SetParent(transform, false);
+        opt2.text = "2: Random Stage";
+        opt2.color = new Color(0.7f, 0.9f, 1f);
+        AddOutline(opt2);
 
-        {
-            var opt = CreateLabel("OptRandom", new Vector2(0f, 20f - i * 70f), new Vector2(600f, 50f), 32, TextAnchor.MiddleCenter, font);
-            opt.transform.SetParent(transform, false);
-            opt.text = hasDemo ? "2: Random Stage" : "1: Random Stage";
-            opt.color = new Color(0.7f, 0.9f, 1f);
-            AddOutline(opt);
-            i++;
-        }
-
-        var hint = CreateLabel("Hint", new Vector2(0f, 20f - i * 70f - 50f), new Vector2(700f, 40f), 20, TextAnchor.MiddleCenter, font);
+        var hint = CreateLabel("Hint", new Vector2(0f, -140f), new Vector2(700f, 40f), 20, TextAnchor.MiddleCenter, font);
         hint.transform.SetParent(transform, false);
         hint.text = "Press number key to start";
         hint.color = new Color(0.6f, 0.6f, 0.6f);
@@ -70,15 +60,12 @@ public class GameMenu : MonoBehaviour
     {
         if (Keyboard.current == null) return;
 
-        bool hasDemo = GameObject.Find("Grid") != null;
-
-        if (hasDemo && Keyboard.current.digit1Key.wasPressedThisFrame)
+        if (Keyboard.current.digit1Key.wasPressedThisFrame)
         {
-            onStart?.Invoke(Stage.Demo);
+            onStart?.Invoke(Stage.Tutorial);
             Destroy(gameObject);
         }
-        else if ((hasDemo && Keyboard.current.digit2Key.wasPressedThisFrame) ||
-                 (!hasDemo && Keyboard.current.digit1Key.wasPressedThisFrame))
+        else if (Keyboard.current.digit2Key.wasPressedThisFrame)
         {
             onStart?.Invoke(Stage.Random);
             Destroy(gameObject);
@@ -88,6 +75,8 @@ public class GameMenu : MonoBehaviour
     Text CreateLabel(string name, Vector2 pos, Vector2 size, int fontSize, TextAnchor anchor, Font font)
     {
         var obj = new GameObject(name);
+        obj.transform.SetParent(transform, false);
+
         var rect = obj.AddComponent<RectTransform>();
         rect.anchoredPosition = pos;
         rect.sizeDelta = size;

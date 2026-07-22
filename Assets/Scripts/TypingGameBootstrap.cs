@@ -7,6 +7,12 @@ public class TypingGameBootstrap : MonoBehaviour
     {
         Application.targetFrameRate = 60;
 
+        if (PlayerPrefs.GetInt("TutorialCompleted", 0) == 0)
+        {
+            StartStage(GameMenu.Stage.Tutorial);
+            return;
+        }
+
         var menuObj = new GameObject("GameMenu");
         var menu = menuObj.AddComponent<GameMenu>();
         menu.Show(StartStage);
@@ -15,22 +21,26 @@ public class TypingGameBootstrap : MonoBehaviour
     void StartStage(GameMenu.Stage stage)
     {
         SetupCamera();
-
-        if (stage == GameMenu.Stage.Random)
-        {
-            var existingGrid = GameObject.Find("Grid");
-            if (existingGrid != null)
-                Destroy(existingGrid);
-        }
-
         SetupBackground();
 
         var player = SetupPlayer();
         var ui = SetupUI();
 
-        LevelGenerator levelGen = null;
-        if (stage == GameMenu.Stage.Random)
-            levelGen = SetupLevelGenerator(player.transform);
+        if (stage == GameMenu.Stage.Tutorial)
+        {
+            var tutorialCam = Camera.main.gameObject.AddComponent<AutoScrollCamera>();
+            tutorialCam.SetTarget(player.transform);
+            ui.Bind(player);
+            SetupTutorial(player, ui);
+            player.EnableInput();
+            return;
+        }
+
+        var existingGrid = GameObject.Find("Grid");
+        if (existingGrid != null)
+            Destroy(existingGrid);
+
+        LevelGenerator levelGen = SetupLevelGenerator(player.transform);
 
         var camFollow = Camera.main.gameObject.AddComponent<AutoScrollCamera>();
         camFollow.SetTarget(player.transform);
@@ -41,7 +51,7 @@ public class TypingGameBootstrap : MonoBehaviour
 
     AutoScrollPlayer SetupPlayer()
     {
-        var existing = GameObject.Find("Complete");
+        var existing = GameObject.Find("Complete") ?? GameObject.Find("Player");
         GameObject playerObj;
 
         if (existing != null)
@@ -52,6 +62,9 @@ public class TypingGameBootstrap : MonoBehaviour
 
             foreach (var col in playerObj.GetComponents<Collider2D>())
                 Destroy(col);
+
+            var sr = playerObj.GetComponent<SpriteRenderer>();
+            if (sr != null) sr.color = Color.white;
         }
         else
         {
@@ -98,6 +111,28 @@ public class TypingGameBootstrap : MonoBehaviour
         var obj = new GameObject("PlatformerGameManager");
         var manager = obj.AddComponent<PlatformerGameManager>();
         manager.Initialize(player, ui, levelGen, camera);
+    }
+
+    void SetupTutorial(AutoScrollPlayer player, PlatformerUI ui)
+    {
+        var obj = new GameObject("TutorialManager");
+        var mgr = obj.AddComponent<TutorialManager>();
+        mgr.player = player;
+        mgr.ui = ui;
+        mgr.goalX = 100f;
+        mgr.hints = new TutorialManager.WaypointHint[]
+        {
+            new TutorialManager.WaypointHint
+            {
+                distanceThreshold = 18f,
+                message = "目の前に穴がある！ [jump] と入力して飛び越えよう！",
+            },
+            new TutorialManager.WaypointHint
+            {
+                distanceThreshold = 58f,
+                message = "大きい穴だ！ まず [dash] で加速、そのあと [jump] で飛び越えよう！",
+            },
+        };
     }
 
     void SetupCamera()
