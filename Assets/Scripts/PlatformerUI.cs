@@ -127,7 +127,7 @@ public class PlatformerUI : MonoBehaviour
 
         var retry = CreateLabel("Retry", new Vector2(0f, -20f), new Vector2(600f, 50f), 26, TextAnchor.MiddleCenter);
         retry.transform.SetParent(gameOverPanel.transform, false);
-        retry.text = "Press ENTER to retry";
+        retry.text = "ENTER: Retry / SPACE: Title";
     }
 
     void CreateClearPanel()
@@ -150,7 +150,7 @@ public class PlatformerUI : MonoBehaviour
 
         var retry = CreateLabel("ClearRetry", new Vector2(0f, -20f), new Vector2(600f, 50f), 26, TextAnchor.MiddleCenter);
         retry.transform.SetParent(clearPanel.transform, false);
-        retry.text = "Press ENTER to retry";
+        retry.text = "ENTER: Retry / SPACE: Title";
     }
 
     Text CreateLabel(string name, Vector2 pos, Vector2 size, int fontSize, TextAnchor anchor)

@@ -32,15 +32,37 @@ public class LevelGenerator : MonoBehaviour
         public int y;
     }
 
+    delegate void Block();
+
     public void Initialize(Transform playerTransform)
     {
         player = playerTransform;
+        Debug.Log("LevelGenerator.Initialize start");
         CreateTilemapHierarchy();
+        Debug.Log($"LevelGenerator: groundTilemap={(groundTilemap != null)}, groundTile={(groundTile != null)}");
         LoadTiles();
-        PlaceGroundTiles(-1f, 14f);
-        nextSpawnX = 13f;
+        Debug.Log($"LevelGenerator after LoadTiles: groundTile={(groundTile != null)}");
+        PlaceGroundTiles(-1f, 21f);
+        Debug.Log($"LevelGenerator: placed initial ground, nextSpawnX={nextSpawnX}");
+        nextSpawnX = 20f;
         for (int i = 0; i < 5; i++)
             SpawnNextSegment();
+        RefreshColliders();
+        Debug.Log($"LevelGenerator.Initialize done, nextSpawnX={nextSpawnX}");
+    }
+
+    void RefreshColliders()
+    {
+        if (groundTilemap != null)
+        {
+            groundTilemap.RefreshAllTiles();
+            var collider = groundTilemap.GetComponent<TilemapCollider2D>();
+            if (collider != null)
+            {
+                collider.enabled = false;
+                collider.enabled = true;
+            }
+        }
     }
 
     void CreateTilemapHierarchy()
@@ -107,6 +129,26 @@ public class LevelGenerator : MonoBehaviour
             backgroundTiles = loaded.ToArray();
         }
 #endif
+        if (groundTile == null)
+            groundTile = CreateTile(new Color(0.5f, 0.5f, 0.5f));
+        if (undergroundTile == null)
+            undergroundTile = CreateTile(new Color(0.2f, 0.2f, 0.2f));
+        if (obstacleTile == null)
+            obstacleTile = CreateTile(new Color(1f, 0f, 0f));
+        if (backgroundTiles == null || backgroundTiles.Length == 0)
+            backgroundTiles = new[] { CreateTile(new Color(0.3f, 0.5f, 0.2f)) };
+    }
+
+    Tile CreateTile(Color color)
+    {
+        var tile = ScriptableObject.CreateInstance<Tile>();
+        var tex = new Texture2D(1, 1);
+        tex.SetPixel(0, 0, color);
+        tex.Apply();
+        tile.sprite = Sprite.Create(tex, new Rect(0, 0, 1, 1), new Vector2(0.5f, 0.5f), 1f);
+        tile.color = color;
+        tile.colliderType = Tile.ColliderType.Grid;
+        return tile;
     }
 
     void Update()
@@ -120,22 +162,35 @@ public class LevelGenerator : MonoBehaviour
 
     void SpawnNextSegment()
     {
-        int pattern = Random.Range(0, 100);
+        int combo = Random.Range(0, 100);
 
-        if (pattern < 45)
-            SpawnFlatGround(Random.Range(4f, 8f));
-        else if (pattern < 65)
-            SpawnGap(Random.Range(2.5f, 4.5f));
-        else if (pattern < 80)
-            SpawnFloatingPlatform();
-        else if (pattern < 92)
-            SpawnStairPlatforms();
+        if (combo < 18)
+            Compose(SpawnGround, SpawnGround, SpawnGround);
+        else if (combo < 33)
+            Compose(SpawnGround, SpawnGap, SpawnGround);
+        else if (combo < 48)
+            Compose(SpawnGround, SpawnFloat);
+        else if (combo < 60)
+            Compose(SpawnGround, SpawnStairs);
+        else if (combo < 72)
+            Compose(SpawnGap, SpawnGround, SpawnFloat, SpawnGround);
+        else if (combo < 82)
+            Compose(SpawnFloat, SpawnGap, SpawnGround);
+        else if (combo < 91)
+            Compose(SpawnStairs, SpawnGround, SpawnFloat);
         else
-            SpawnFlatGround(Random.Range(6f, 10f));
+            Compose(SpawnGround, SpawnFloat, SpawnGap, SpawnGround);
     }
 
-    void SpawnFlatGround(float width)
+    void Compose(params Block[] blocks)
     {
+        foreach (var block in blocks)
+            block();
+    }
+
+    void SpawnGround()
+    {
+        float width = Random.Range(3f, 7f);
         float startX = nextSpawnX;
         PlaceGroundTiles(nextSpawnX, width);
         nextSpawnX += width;
@@ -143,39 +198,33 @@ public class LevelGenerator : MonoBehaviour
         PlaceBackgroundAbove(startX, nextSpawnX);
     }
 
-    void SpawnGap(float width)
+    void SpawnGap()
     {
-        nextSpawnX += width;
-        float landingWidth = Random.Range(3f, 6f);
+        float gapWidth = Random.Range(2f, 4.5f);
+        nextSpawnX += gapWidth;
+        float landingWidth = Random.Range(2f, 5f);
         PlaceGroundTiles(nextSpawnX, landingWidth);
         nextSpawnX += landingWidth;
     }
 
-    void SpawnFloatingPlatform()
+    void SpawnFloat()
     {
-        SpawnFlatGround(Random.Range(3f, 5f));
-
         float width = Random.Range(2f, 4f);
-        float height = groundY + Random.Range(1.5f, 3f);
+        float height = groundY + Random.Range(1.5f, 3.5f);
         PlaceFloatingTiles(nextSpawnX, width, height);
-        nextSpawnX += width + Random.Range(1f, 2f);
-
-        SpawnFlatGround(Random.Range(3f, 5f));
+        nextSpawnX += width + Random.Range(0.5f, 1.5f);
     }
 
-    void SpawnStairPlatforms()
+    void SpawnStairs()
     {
-        SpawnFlatGround(3f);
-
-        for (int i = 0; i < 3; i++)
+        int count = Random.Range(2, 4);
+        for (int i = 0; i < count; i++)
         {
-            float width = 2.5f;
+            float stepWidth = Random.Range(2f, 3f);
             float height = groundY + 1f + i * 1.2f;
-            PlaceFloatingTiles(nextSpawnX, width, height);
-            nextSpawnX += width;
+            PlaceFloatingTiles(nextSpawnX, stepWidth, height);
+            nextSpawnX += stepWidth;
         }
-
-        SpawnFlatGround(Random.Range(4f, 6f));
     }
 
     void PlaceGroundTiles(float startX, float width)
@@ -276,5 +325,25 @@ public class LevelGenerator : MonoBehaviour
                 list.RemoveAt(i);
             }
         }
+    }
+
+    public Vector3 FindRespawnPoint(float worldX)
+    {
+        float bestDist = float.MaxValue;
+        Vector3 best = new Vector3(0f, -0.9f, 0f);
+
+        foreach (var region in placedGround)
+        {
+            if (region.endX > worldX)
+            {
+                float dist = region.startX - worldX;
+                if (dist >= 0 && dist < bestDist)
+                {
+                    bestDist = dist;
+                    best = new Vector3(region.startX + 0.5f, region.y + 1.5f, 0f);
+                }
+            }
+        }
+        return best;
     }
 }

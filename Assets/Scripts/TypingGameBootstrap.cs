@@ -5,10 +5,15 @@ public class TypingGameBootstrap : MonoBehaviour
 {
     void Awake()
     {
+        Debug.Log("TypingGameBootstrap.Awake start");
         Application.targetFrameRate = 60;
 
-        if (PlayerPrefs.GetInt("TutorialCompleted", 0) == 0)
+        int tutorialCompleted = PlayerPrefs.GetInt("TutorialCompleted", 0);
+        Debug.Log($"TypingGameBootstrap: TutorialCompleted={tutorialCompleted}");
+
+        if (tutorialCompleted == 0)
         {
+            Debug.Log("TypingGameBootstrap: auto-starting tutorial");
             StartStage(GameMenu.Stage.Tutorial);
             return;
         }
@@ -20,6 +25,7 @@ public class TypingGameBootstrap : MonoBehaviour
 
     void StartStage(GameMenu.Stage stage)
     {
+        Debug.Log($"StartStage called: {stage}");
         SetupCamera();
         SetupBackground();
 
@@ -28,6 +34,7 @@ public class TypingGameBootstrap : MonoBehaviour
 
         if (stage == GameMenu.Stage.Tutorial)
         {
+            Debug.Log("StartStage: Tutorial mode");
             var tutorialCam = Camera.main.gameObject.AddComponent<AutoScrollCamera>();
             tutorialCam.SetTarget(player.transform);
             ui.Bind(player);
@@ -36,16 +43,18 @@ public class TypingGameBootstrap : MonoBehaviour
             return;
         }
 
+        Debug.Log("StartStage: Random mode - destroying existing Grid");
         var existingGrid = GameObject.Find("Grid");
         if (existingGrid != null)
-            Destroy(existingGrid);
+            DestroyImmediate(existingGrid);
 
         LevelGenerator levelGen = SetupLevelGenerator(player.transform);
+        Debug.Log($"StartStage: levelGen created = {(levelGen != null)}");
 
         var camFollow = Camera.main.gameObject.AddComponent<AutoScrollCamera>();
         camFollow.SetTarget(player.transform);
 
-        SetupManager(player, ui, levelGen, camFollow);
+        SetupManager(player, ui, levelGen, camFollow, true);
         player.EnableInput();
     }
 
@@ -100,17 +109,20 @@ public class TypingGameBootstrap : MonoBehaviour
 
     LevelGenerator SetupLevelGenerator(Transform player)
     {
+        Debug.Log("SetupLevelGenerator start");
         var obj = new GameObject("LevelGenerator");
         var gen = obj.AddComponent<LevelGenerator>();
+        Debug.Log($"SetupLevelGenerator: component added = {(gen != null)}");
         gen.Initialize(player);
+        Debug.Log("SetupLevelGenerator done");
         return gen;
     }
 
-    void SetupManager(AutoScrollPlayer player, PlatformerUI ui, LevelGenerator levelGen, AutoScrollCamera camera)
+    void SetupManager(AutoScrollPlayer player, PlatformerUI ui, LevelGenerator levelGen, AutoScrollCamera camera, bool randomMode = false)
     {
         var obj = new GameObject("PlatformerGameManager");
         var manager = obj.AddComponent<PlatformerGameManager>();
-        manager.Initialize(player, ui, levelGen, camera);
+        manager.Initialize(player, ui, levelGen, camera, randomMode);
     }
 
     void SetupTutorial(AutoScrollPlayer player, PlatformerUI ui)
@@ -126,6 +138,11 @@ public class TypingGameBootstrap : MonoBehaviour
             {
                 distanceThreshold = 18f,
                 message = "目の前に穴がある！ [jump] と入力して飛び越えよう！",
+            },
+            new TutorialManager.WaypointHint
+            {
+                distanceThreshold = 35f,
+                message = "長い単語ほど強い効果になる！ [hop]より[jump]、[run]より[dash]が強力",
             },
             new TutorialManager.WaypointHint
             {

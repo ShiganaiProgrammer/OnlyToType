@@ -30,30 +30,37 @@ public class GameMenu : MonoBehaviour
         var bg = bgObj.AddComponent<Image>();
         bg.color = new Color(0.05f, 0.05f, 0.1f, 0.95f);
 
-        var title = CreateLabel("Title", new Vector2(0f, 160f), new Vector2(900f, 100f), 72, TextAnchor.MiddleCenter, font);
+        var title = CreateLabel("Title", new Vector2(0f, 200f), new Vector2(1200f, 150f), 99, TextAnchor.MiddleCenter, font);
         title.transform.SetParent(transform, false);
         title.text = "ONLY TO TYPE";
         title.color = new Color(1f, 0.75f, 0.4f);
         title.fontStyle = FontStyle.Bold;
         AddOutline(title);
 
-        var opt1 = CreateLabel("Opt1", new Vector2(0f, 20f), new Vector2(600f, 50f), 32, TextAnchor.MiddleCenter, font);
+        var opt1 = CreateLabel("Opt1", new Vector2(0f, 40f), new Vector2(800f, 80f), 64, TextAnchor.MiddleCenter, font);
         opt1.transform.SetParent(transform, false);
         opt1.text = "1: Tutorial";
         opt1.color = new Color(0.7f, 0.9f, 1f);
         AddOutline(opt1);
 
-        var opt2 = CreateLabel("Opt2", new Vector2(0f, -50f), new Vector2(600f, 50f), 32, TextAnchor.MiddleCenter, font);
+        var opt2 = CreateLabel("Opt2", new Vector2(0f, -80f), new Vector2(800f, 80f), 64, TextAnchor.MiddleCenter, font);
         opt2.transform.SetParent(transform, false);
         opt2.text = "2: Random Stage";
         opt2.color = new Color(0.7f, 0.9f, 1f);
         AddOutline(opt2);
 
-        var hint = CreateLabel("Hint", new Vector2(0f, -140f), new Vector2(700f, 40f), 20, TextAnchor.MiddleCenter, font);
+        var hint = CreateLabel("Hint", new Vector2(0f, -200f), new Vector2(900f, 60f), 40, TextAnchor.MiddleCenter, font);
         hint.transform.SetParent(transform, false);
         hint.text = "Press number key to start";
         hint.color = new Color(0.6f, 0.6f, 0.6f);
         AddOutline(hint);
+
+        var best = CreateLabel("BestRecord", new Vector2(0f, -280f), new Vector2(600f, 60f), 50, TextAnchor.MiddleCenter, font);
+        best.transform.SetParent(transform, false);
+        float bestDist = PlayerPrefs.GetFloat("BestDistance", 0f);
+        best.text = bestDist > 0f ? $"Best: {Mathf.FloorToInt(bestDist)}m" : "";
+        best.color = new Color(0.5f, 0.5f, 0.5f);
+        AddOutline(best);
     }
 
     void Update()
@@ -62,11 +69,13 @@ public class GameMenu : MonoBehaviour
 
         if (Keyboard.current.digit1Key.wasPressedThisFrame)
         {
+            Debug.Log("GameMenu: Tutorial selected");
             onStart?.Invoke(Stage.Tutorial);
             Destroy(gameObject);
         }
         else if (Keyboard.current.digit2Key.wasPressedThisFrame)
         {
+            Debug.Log("GameMenu: Random selected");
             onStart?.Invoke(Stage.Random);
             Destroy(gameObject);
         }

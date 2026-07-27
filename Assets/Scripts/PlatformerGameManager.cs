@@ -16,6 +16,7 @@ public class PlatformerGameManager : MonoBehaviour
     AutoScrollCamera scrollCamera;
     TypingInputReader inputReader;
     AudioSource audioSource;
+    bool isRandomMode;
     bool isGameOver;
     bool isRespawning;
     bool isCleared;
@@ -27,12 +28,14 @@ public class PlatformerGameManager : MonoBehaviour
         AutoScrollPlayer scrollPlayer,
         PlatformerUI platformerUI,
         LevelGenerator generator,
-        AutoScrollCamera camera)
+        AutoScrollCamera camera,
+        bool randomMode = false)
     {
         player = scrollPlayer;
         ui = platformerUI;
         levelGenerator = generator;
         scrollCamera = camera;
+        isRandomMode = randomMode;
         ui.Bind(player);
         player.OnHitObstacle += HandleHitObstacle;
         isGameOver = false;
@@ -51,7 +54,8 @@ public class PlatformerGameManager : MonoBehaviour
 
     void Start()
     {
-        StartCoroutine(LoadFlagTextureAndCreateGoal());
+        if (!isRandomMode)
+            StartCoroutine(LoadFlagTextureAndCreateGoal());
     }
 
     IEnumerator LoadFlagTextureAndCreateGoal()
@@ -140,6 +144,15 @@ public class PlatformerGameManager : MonoBehaviour
 
     void ResetWorld()
     {
+        if (isRandomMode && levelGenerator != null)
+        {
+            Vector3 respawn = levelGenerator.FindRespawnPoint(player.transform.position.x);
+            player.transform.position = respawn;
+            player.ResetRun();
+            scrollCamera?.ResetPosition();
+            return;
+        }
+
         player.transform.position = new Vector3(0f, -0.9f, 0f);
         player.ResetRun();
         scrollCamera?.ResetPosition();
@@ -256,6 +269,18 @@ public class PlatformerGameManager : MonoBehaviour
         player.enabled = false;
         player.GetComponent<Rigidbody2D>().linearVelocity = Vector2.zero;
         player.DisableInput();
+
+        if (isRandomMode)
+        {
+            float dist = player.Distance;
+            float best = PlayerPrefs.GetFloat("BestDistance", 0f);
+            if (dist > best)
+            {
+                PlayerPrefs.SetFloat("BestDistance", dist);
+                PlayerPrefs.Save();
+            }
+        }
+
         ui.ShowGameOver(player.Distance, reason);
     }
 

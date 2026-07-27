@@ -52,9 +52,9 @@ public class AutoScrollPlayer : MonoBehaviour
             spriteRenderer = gameObject.AddComponent<SpriteRenderer>();
 
         commandInput = new TypingCommandInput();
-        commandInput.RegisterCommand(JumpCommand, TryJump);
+        commandInput.RegisterCommand(JumpCommand, TryHighJump);
         commandInput.RegisterCommand(JumpCommand2, TryJump);
-        commandInput.RegisterCommand(DashCommand, TryDash);
+        commandInput.RegisterCommand(DashCommand, TryLongDash);
         commandInput.RegisterCommand(DashCommand2, TryDash);
 
         inputReader = new TypingInputReader();
@@ -157,9 +157,24 @@ public class AutoScrollPlayer : MonoBehaviour
         rb.linearVelocity = velocity;
     }
 
+    void TryHighJump()
+    {
+        if (!isGrounded) return;
+
+        groundedTimer = 0f;
+        var velocity = rb.linearVelocity;
+        velocity.y = jumpForce * 1.2f;
+        rb.linearVelocity = velocity;
+    }
+
     void TryDash()
     {
         dashTimer = dashDuration;
+    }
+
+    void TryLongDash()
+    {
+        dashTimer = 8f;
     }
 
     void UpdateAnimation()

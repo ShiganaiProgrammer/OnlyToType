@@ -195,12 +195,21 @@ public class TutorialManager : MonoBehaviour
         {
             if (isComplete || isSkipped)
             {
-                SceneManager.LoadScene(SceneManager.GetActiveScene().name);
+                GoToMenu();
                 return;
             }
             if (isGameOver)
             {
                 RestartTutorial();
+                return;
+            }
+        }
+
+        if (Keyboard.current != null && Keyboard.current.spaceKey.wasPressedThisFrame)
+        {
+            if (isGameOver || isComplete || isSkipped)
+            {
+                GoToMenu();
                 return;
             }
         }
@@ -293,6 +302,11 @@ public class TutorialManager : MonoBehaviour
         var cam = Camera.main?.GetComponent<AutoScrollCamera>();
         if (cam != null) cam.ResetPosition();
         HideMessage();
+    }
+
+    void GoToMenu()
+    {
+        SceneManager.LoadScene(SceneManager.GetActiveScene().name);
     }
 
     void ShowMessage(string text)
